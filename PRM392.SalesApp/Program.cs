@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models; // Cần thêm để cấu hình Swagger
+using PRM392.SalesApp.Services.Hubs;
 using PRM392.SalesApp.Repositories;
 using PRM392.SalesApp.Repositories.Data;
 using PRM392.SalesApp.Repositories.Interfaces;
@@ -34,12 +35,18 @@ namespace PRM392.SalesApp.API
             builder.Services.AddScoped<ICartRepository, CartRepository>();
             builder.Services.AddScoped<ICartService, CartService>();
 
+            builder.Services.AddSingleton<IConnectionManager, ConnectionManager>(); // Dùng Singleton
+            builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+            builder.Services.AddScoped<IChatService, ChatService>();
+
             // 3. Đăng ký Controllers
             builder.Services.AddControllers().AddJsonOptions(o =>
             {
                 o.JsonSerializerOptions.ReferenceHandler =
                     System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
             });
+
+            builder.Services.AddSignalR();
 
             // 4. Cấu hình JWT Authentication
             builder.Services.AddAuthentication(options =>
@@ -114,6 +121,8 @@ namespace PRM392.SalesApp.API
 
 
             app.MapControllers();
+
+            app.MapHub<ChatHub>("/chathub");
 
             app.Run();
         }

@@ -15,5 +15,8 @@ namespace PRM392.SalesApp.Repositories.Models
         public string? PhoneNumber { get; set; }
         public string? Address { get; set; }
         public string Role { get; set; }
+
+        public virtual ICollection<ChatMessage> SentMessages { get; set; } = new List<ChatMessage>();
+        public virtual ICollection<ChatMessage> ReceivedMessages { get; set; } = new List<ChatMessage>();
     }
 }

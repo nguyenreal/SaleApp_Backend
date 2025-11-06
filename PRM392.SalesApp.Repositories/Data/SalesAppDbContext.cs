@@ -152,12 +152,21 @@ namespace PRM392.SalesApp.Repositories.Data
                 e.ToTable("ChatMessages");
                 e.HasKey(x => x.ChatMessageID);
                 e.Property(x => x.Message);
-                e.Property(x => x.SentAt).HasDefaultValueSql("GETDATE()");
+                e.Property(x => x.SentAt).HasDefaultValueSql("GETUTCDATE()"); // Dùng GETUTCDATE()
 
-                e.HasOne<User>()
-                 .WithMany()
-                 .HasForeignKey(x => x.UserID)
-                 .OnDelete(DeleteBehavior.NoAction);
+                // --- CẤU HÌNH KHÓA NGOẠI MỚI ---
+
+                // Cấu hình Sender (Người gửi)
+                e.HasOne(m => m.Sender)
+                 .WithMany(u => u.SentMessages) // Liên kết với ICollection SentMessages
+                 .HasForeignKey(m => m.SenderID)
+                 .OnDelete(DeleteBehavior.NoAction); // Rất quan trọng
+
+                // Cấu hình Recipient (Người nhận)
+                e.HasOne(m => m.Recipient)
+                 .WithMany(u => u.ReceivedMessages) // Liên kết với ICollection ReceivedMessages
+                 .HasForeignKey(m => m.RecipientID)
+                 .OnDelete(DeleteBehavior.NoAction); // Rất quan trọng
             });
 
             // StoreLocations
