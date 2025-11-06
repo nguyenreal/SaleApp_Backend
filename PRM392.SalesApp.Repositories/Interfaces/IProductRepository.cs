@@ -6,5 +6,6 @@ namespace PRM392.SalesApp.Repositories.Interfaces
     {
         // Phương thức tùy chỉnh để lấy sản phẩm với filter/sort
         Task<IEnumerable<Product>> GetProductsAsync(int? categoryId, decimal? minPrice, decimal? maxPrice, string? sortBy);
+        Task<Product> GetProductByIdAsync(int id);
     }
 }

@@ -60,5 +60,12 @@ namespace PRM392.SalesApp.Repositories
 
             return await query.ToListAsync();
         }
+
+        public async Task<Product> GetProductByIdAsync(int id)
+        {
+            return await _dbSet
+                .Include(p => p.Category) // Lấy luôn thông tin Category
+                .FirstOrDefaultAsync(p => p.ProductID == id);
+        }
     }
 }
