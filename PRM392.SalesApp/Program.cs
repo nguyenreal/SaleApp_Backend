@@ -39,6 +39,9 @@ namespace PRM392.SalesApp.API
             builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
             builder.Services.AddScoped<IChatService, ChatService>();
 
+            builder.Services.AddScoped<IStoreLocationRepository, StoreLocationRepository>();
+            builder.Services.AddScoped<IStoreLocationService, StoreLocationService>();
+
             // 3. Đăng ký Controllers
             builder.Services.AddControllers().AddJsonOptions(o =>
             {
