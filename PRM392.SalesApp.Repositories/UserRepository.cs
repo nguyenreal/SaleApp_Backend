@@ -20,5 +20,13 @@ namespace PRM392.SalesApp.Repositories
         {
             return await _dbSet.FirstOrDefaultAsync(u => u.Username == username);
         }
+
+        public async Task<List<int>> GetAdminUserIdsAsync()
+        {
+            return await _dbSet
+                .Where(u => u.Role == "Admin")
+                .Select(u => u.UserID)
+                .ToListAsync();
+        }
     }
 }

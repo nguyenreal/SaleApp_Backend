@@ -17,6 +17,7 @@ namespace PRM392.SalesApp.Services.Interfaces
         Task<CartDto> RemoveItemForUserAsync(int userId, int cartItemId, CancellationToken ct = default);
         Task<CartDto> UpdateCartStatusForUserAsync(int userId, string status, CancellationToken ct = default);
         Task<CartDto> UpdateCartStatusByIdAsync(int userId, int cartId, string status, bool isAdmin, CancellationToken ct = default);
+        Task<CartDto> GetOrCreateCartByUserIdAsync(int userId, CancellationToken ct = default);
 
     }
 }

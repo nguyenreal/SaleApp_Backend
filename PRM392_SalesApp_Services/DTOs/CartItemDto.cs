@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PRM392_SalesApp_Services.DTOs
+﻿// Vị trí: .../DTOs/CartItemDto.cs
+public class CartItemDto
 {
-    public class CartItemDto
-    {
-        public int CartItemID { get; init; }
-        public int? ProductID { get; init; }
-        public string? ProductName { get; init; }   // lấy qua JOIN/map
-        public int Quantity { get; init; }
-        public decimal Price { get; init; }         // giá tại thời điểm bỏ vào giỏ
-    }
+    public int CartItemID { get; init; }
+    public int? ProductID { get; init; }
+    public string? ProductName { get; init; }
+    public string? ImageURL { get; init; } // <<< THÊM DÒNG NÀY
+    public int Quantity { get; init; }
+    public decimal Price { get; init; }
 }

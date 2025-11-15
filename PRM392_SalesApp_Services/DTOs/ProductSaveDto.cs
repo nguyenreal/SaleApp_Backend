@@ -2,12 +2,14 @@
 
 namespace PRM392.SalesApp.Services.DTOs
 {
-    // DTO này dùng cho cả Create và Update
+    /// <summary>
+    /// DTO for creating/updating products
+    /// </summary>
     public class ProductSaveDto
     {
         [Required]
         [MaxLength(100)]
-        public string ProductName { get; set; }
+        public string ProductName { get; set; } = string.Empty;
 
         [MaxLength(255)]
         public string? BriefDescription { get; set; }
@@ -20,10 +22,10 @@ namespace PRM392.SalesApp.Services.DTOs
         [Range(0.01, (double)decimal.MaxValue)]
         public decimal Price { get; set; }
 
+
         [MaxLength(255)]
         public string? ImageURL { get; set; }
 
-        // CategoryID có thể null (ví dụ: sản phẩm chưa phân loại)
         public int? CategoryID { get; set; }
     }
 }

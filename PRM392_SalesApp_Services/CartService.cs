@@ -39,9 +39,8 @@ namespace PRM392.SalesApp.Services
                                   .ToArray();
 
             var usernameMap = await _cartRepo.GetUsernamesAsync(userIds, ct);
-            var productNameMap = await _cartRepo.GetProductNamesAsync(productIds, ct);
-
-            var dto = carts.Select(c => MapCartToDto(c, usernameMap, productNameMap)).ToList();
+            var productInfoMap = await _cartRepo.GetProductInfoAsync(productIds, ct);
+            var dto = carts.Select(c => MapCartToDto(c, usernameMap, productInfoMap)).ToList();
 
             return new PagedResult<CartDto>
             {
@@ -81,10 +80,9 @@ namespace PRM392.SalesApp.Services
             await _cartRepo.SaveChangesAsync();
 
             var productIds = cart.Items.Where(i => i.ProductID.HasValue).Select(i => i.ProductID!.Value).Distinct();
-            var productNameMap = await _cartRepo.GetProductNamesAsync(productIds, ct);
+            var productInfoMap = await _cartRepo.GetProductInfoAsync(productIds, ct);
             var usernameMap = await _cartRepo.GetUsernamesAsync(new[] { userId }, ct);
-
-            return MapCartToDto(cart, usernameMap, productNameMap);
+            return MapCartToDto(cart, usernameMap, productInfoMap);
         }
 
         public async Task<CartDto> UpdateItemQuantityForUserAsync(int userId, int cartItemId, int quantity, CancellationToken ct = default)
@@ -111,9 +109,9 @@ namespace PRM392.SalesApp.Services
             await _cartRepo.SaveChangesAsync();
 
             var productIds = cart.Items.Where(i => i.ProductID.HasValue).Select(i => i.ProductID!.Value).Distinct();
-            var productMap = await _cartRepo.GetProductNamesAsync(productIds, ct);
+            var productInfoMap = await _cartRepo.GetProductInfoAsync(productIds, ct);
             var userMap = await _cartRepo.GetUsernamesAsync(new[] { userId }, ct);
-            return MapCartToDto(cart, userMap, productMap);
+            return MapCartToDto(cart, userMap, productInfoMap);
         }
 
         public async Task<CartDto> RemoveItemForUserAsync(int userId, int cartItemId, CancellationToken ct = default)
@@ -134,9 +132,9 @@ namespace PRM392.SalesApp.Services
             await _cartRepo.SaveChangesAsync();
 
             var productIds = cart.Items.Where(i => i.ProductID.HasValue).Select(i => i.ProductID!.Value).Distinct();
-            var productMap = await _cartRepo.GetProductNamesAsync(productIds, ct);
+            var productInfoMap = await _cartRepo.GetProductInfoAsync(productIds, ct);
             var userMap = await _cartRepo.GetUsernamesAsync(new[] { userId }, ct);
-            return MapCartToDto(cart, userMap, productMap);
+            return MapCartToDto(cart, userMap, productInfoMap);
         }
 
         public async Task<CartDto> UpdateCartStatusForUserAsync(int userId, string status, CancellationToken ct = default)
@@ -149,15 +147,15 @@ namespace PRM392.SalesApp.Services
             await _cartRepo.SaveChangesAsync();
 
             var productIds = cart.Items.Where(i => i.ProductID.HasValue).Select(i => i.ProductID!.Value).Distinct();
-            var productMap = await _cartRepo.GetProductNamesAsync(productIds, ct);
+            var productInfoMap = await _cartRepo.GetProductInfoAsync(productIds, ct);
             var userMap = await _cartRepo.GetUsernamesAsync(new[] { userId }, ct);
-            return MapCartToDto(cart, userMap, productMap);
+            return MapCartToDto(cart, userMap, productInfoMap);
         }
 
         private static CartDto MapCartToDto(
             Cart c,
             IReadOnlyDictionary<int, string> usernameMap,
-            IReadOnlyDictionary<int, string> productNameMap)
+            IReadOnlyDictionary<int, ProductCartInfoDto> productInfoMap)
         {
             return new CartDto
             {
@@ -167,15 +165,17 @@ namespace PRM392.SalesApp.Services
                 TotalPrice = c.TotalPrice,
                 Status = c.Status,
                 Items = c.Items.OrderBy(i => i.CartItemID).Select(i => new CartItemDto
-                {
-                    CartItemID = i.CartItemID,
-                    ProductID = i.ProductID,
-                    ProductName = (i.ProductID.HasValue && productNameMap.TryGetValue(i.ProductID.Value, out var pname)) ? pname : null,
-                    Quantity = i.Quantity,
-                    Price = i.Price
-                }).ToList()
-            };
-        }
+        {
+            CartItemID = i.CartItemID,
+            ProductID = i.ProductID,
+            // <<< SỬA KHỐI NÀY >>>
+            ProductName = (i.ProductID.HasValue && productInfoMap.TryGetValue(i.ProductID.Value, out var info)) ? info.Name : null,
+            ImageURL = (i.ProductID.HasValue && productInfoMap.TryGetValue(i.ProductID.Value, out var info2)) ? info2.ImageURL : null, // <-- THÊM IMAGEURL
+            Quantity = i.Quantity,
+            Price = i.Price
+    }).ToList()
+    };
+}
 
         public async Task<CartDto> UpdateCartStatusByIdAsync(int userId, int cartId, string status, bool isAdmin, CancellationToken ct = default)
         {
@@ -194,10 +194,29 @@ namespace PRM392.SalesApp.Services
             await _cartRepo.SaveChangesAsync();
 
             var productIds = cart.Items.Where(i => i.ProductID.HasValue).Select(i => i.ProductID!.Value).Distinct();
-            var productMap = await _cartRepo.GetProductNamesAsync(productIds, ct);
+            var productInfoMap = await _cartRepo.GetProductInfoAsync(productIds, ct);
             var userMap = await _cartRepo.GetUsernamesAsync(new[] { cart.UserID ?? 0 }, ct);
-            return MapCartToDto(cart, userMap, productMap);
+            return MapCartToDto(cart, userMap, productInfoMap);
         }
 
+        public async Task<CartDto> GetOrCreateCartByUserIdAsync(int userId, CancellationToken ct = default)
+        {
+            var cart = await _cartRepo.GetOpenCartByUserIdAsync(userId, ct);
+            if (cart == null)
+            {
+                // Logic này được copy từ hàm AddItemForUserAsync của bạn
+                cart = new Cart { UserID = userId, Status = "Open", TotalPrice = 0 };
+                await _cartRepo.AddAsync(cart);
+                await _cartRepo.SaveChangesAsync();
+                cart.Items = new List<CartItem>(); // Đảm bảo list items được khởi tạo
+            }
+
+            // Map và trả về
+            var productIds = cart.Items.Where(i => i.ProductID.HasValue).Select(i => i.ProductID!.Value).Distinct();
+            var productInfoMap = await _cartRepo.GetProductInfoAsync(productIds, ct);
+            var usernameMap = await _cartRepo.GetUsernamesAsync(new[] { userId }, ct);
+
+            return MapCartToDto(cart, usernameMap, productInfoMap);
+        }
     }
 }

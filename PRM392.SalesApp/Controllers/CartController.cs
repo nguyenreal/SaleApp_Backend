@@ -145,5 +145,27 @@ namespace PRM392.SalesApp.API.Controllers
                 return StatusCode(500, new { message = "An error occurred while updating cart status" });
             }
         }
+
+        [HttpGet("my-cart")]
+        public async Task<IActionResult> GetMyCart(CancellationToken ct = default)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out var userId)) 
+            {
+                return Unauthorized("Invalid token.");
+            }
+
+            try
+            {
+                // Giả sử service của bạn có hàm GetOrCreateCartByUserIdAsync
+                // (Giống như hàm AddItemForUserAsync đang dùng)
+                var cart = await _service.GetOrCreateCartByUserIdAsync(userId, ct); 
+                return Ok(cart);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 }

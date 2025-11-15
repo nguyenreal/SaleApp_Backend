@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿// Vị trí: PRM392.SalesApp.API/Controllers/ProductsController.cs
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRM392.SalesApp.Services.DTOs;
 using PRM392.SalesApp.Services.Interfaces;
@@ -18,6 +20,7 @@ namespace PRM392.SalesApp.API.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetProducts(
+            [FromQuery] string? search,
             [FromQuery] int? categoryId,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
@@ -25,12 +28,17 @@ namespace PRM392.SalesApp.API.Controllers
         {
             try
             {
-                var products = await _productService.GetProductsAsync(categoryId, minPrice, maxPrice, sortBy);
+                var products = await _productService.GetProductsAsync(
+                    search,
+                    categoryId,
+                    (double?)minPrice,
+                    (double?)maxPrice,
+                    sortBy
+                );
                 return Ok(products);
             }
             catch (Exception ex)
             {
-                // Log lỗi ở đây (trong thực tế)
                 return StatusCode(500, new { message = "An error occurred while fetching products" });
             }
         }
@@ -40,24 +48,23 @@ namespace PRM392.SalesApp.API.Controllers
         {
             try
             {
-                var productDetail = await _productService.GetProductDetailAsync(id);
+                var productDetail = await _productService.GetProductByIdAsync(id);
+
+                if (productDetail == null)
+                {
+                    return NotFound(new { message = "Product not found" });
+                }
+
                 return Ok(productDetail);
             }
             catch (Exception ex)
             {
-                // Nếu service ném lỗi "Product not found", trả về 404
-                if (ex.Message == "Product not found")
-                {
-                    return NotFound(new { message = ex.Message });
-                }
-
-                // Lỗi chung
                 return StatusCode(500, new { message = "An error occurred" });
             }
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")] // <-- Chỉ định vai trò "Admin"
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateProduct([FromBody] ProductSaveDto createDto)
         {
             if (!ModelState.IsValid)
@@ -67,17 +74,19 @@ namespace PRM392.SalesApp.API.Controllers
             try
             {
                 var newProduct = await _productService.CreateProductAsync(createDto);
-                // Trả về 201 Created, kèm link tới API GetProductById
                 return CreatedAtAction(nameof(GetProductById), new { id = newProduct.ProductID }, newProduct);
             }
+            // <<< SỬA LỖI CÚ PHÁP Ở ĐÂY >>>
+            // Tôi đã xóa nhầm dấu '}' ở dòng 84
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = ex.Message });
             }
+            // Dấu '}' bị thừa ở đây đã được xóa
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")] // <-- Chỉ định vai trò "Admin"
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductSaveDto updateDto)
         {
             if (!ModelState.IsValid)
@@ -87,7 +96,7 @@ namespace PRM392.SalesApp.API.Controllers
             try
             {
                 await _productService.UpdateProductAsync(id, updateDto);
-                return NoContent(); // Trả về 204 No Content khi thành công
+                return NoContent();
             }
             catch (Exception ex)
             {
@@ -100,20 +109,20 @@ namespace PRM392.SalesApp.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")] // <-- Chỉ định vai trò "Admin"
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             try
             {
-                await _productService.DeleteProductAsync(id);
-                return NoContent(); // Trả về 204 No Content khi thành công
+                var success = await _productService.DeleteProductAsync(id);
+                if (!success)
+                {
+                    return NotFound(new { message = "Product not found" });
+                }
+                return NoContent();
             }
             catch (Exception ex)
             {
-                if (ex.Message == "Product not found")
-                {
-                    return NotFound(new { message = ex.Message });
-                }
                 return StatusCode(500, new { message = ex.Message });
             }
         }

@@ -5,6 +5,12 @@ using PRM392.SalesApp.Repositories.Models;
 
 namespace PRM392.SalesApp.Repositories.Interfaces
 {
+    public class ProductCartInfoDto
+    {
+        public string Name { get; set; }
+        public string? ImageURL { get; set; }
+    }
+
     public interface ICartRepository : IGenericRepository<Cart>
     {
         Task<(IReadOnlyList<Cart> Carts, int Total)> GetPagedAsync(
@@ -19,6 +25,7 @@ namespace PRM392.SalesApp.Repositories.Interfaces
         Task<CartItem?> GetCartItemByIdAsync(int cartItemId, CancellationToken ct = default);
         void RemoveCartItem(CartItem item);
         Task<Cart?> GetByIdWithItemsAsync(int cartId, CancellationToken ct = default);
+        Task<IReadOnlyDictionary<int, ProductCartInfoDto>> GetProductInfoAsync(IEnumerable<int> productIds, CancellationToken ct);
 
     }
 }

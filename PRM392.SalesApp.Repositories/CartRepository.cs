@@ -109,5 +109,25 @@ namespace PRM392.SalesApp.Repositories
                 .FirstOrDefaultAsync(c => c.CartID == cartId, ct);
         }
 
+        public async Task<IReadOnlyDictionary<int, ProductCartInfoDto>> GetProductInfoAsync(IEnumerable<int> productIds, CancellationToken ct)
+        {
+            if (productIds == null || !productIds.Any())
+                return new Dictionary<int, ProductCartInfoDto>();
+
+            return await _context.Products
+                .Where(p => productIds.Contains(p.ProductID))
+                .AsNoTracking()
+                .Select(p => new
+                {
+                    p.ProductID,
+                    Info = new ProductCartInfoDto // Tạo DTO mới
+                    {
+                        Name = p.ProductName,
+                        ImageURL = p.ImageURL
+                    }
+                })
+                .ToDictionaryAsync(x => x.ProductID, x => x.Info, ct);
+        }
+
     }
 }
